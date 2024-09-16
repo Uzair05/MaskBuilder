@@ -39,7 +39,18 @@ def create_labels(save_dir, save_fname, mask_color, img_dir, img_path=None):
 
         # print(cv.convexHull(np.array(points), returnPoints=True).reshape((-1,2)))         
         mask = cv.fillPoly(np.zeros_like(img), [cv.convexHull(np.array(points), returnPoints=True).reshape((-1,2))], [1,1,1]).astype(np.uint8)
-        np.savetxt(os.path.join(save_dir, "mask.csv" if save_fname is None else save_fname), mask[:,:,0], delimiter=',')
+        try:
+            if (os.path.exists(save_dir) and os.path.isdir(save_dir)):
+                save_path = os.path.join(save_dir, "mask.csv" if save_fname is None else save_fname)
+                if (os.path.exists(save_path)):
+                    raise ValueError("Mask already exists; will be overwritten")
+                else:
+                    np.savetxt(save_path, mask[:,:,0], delimiter=',')
+            else:
+                raise ValueError("Save Path not found")
+        except Exception as e:
+            print(e)
+            exit()
 
         
     elif (img_dir is not None):
