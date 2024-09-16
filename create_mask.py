@@ -13,7 +13,7 @@ def create_labels(save_dir, save_fname, mask_color, img_dir, img_path=None):
 
     if (img_path is not None):
         img = None
-        points = []
+        points = [[]]
         try:
             if (os.path.exists(img_path) and os.path.isfile(img_path)):
                 img = cv.imread(img_path)
@@ -26,19 +26,29 @@ def create_labels(save_dir, save_fname, mask_color, img_dir, img_path=None):
         def draw_circle(event,x,y,flags,param):
             if event == cv.EVENT_LBUTTONDBLCLK:
                 cv.circle(img,(x,y),5,(255,0,0),-1)
-                points.append((x,y))
+                points[-1].append((x,y))
 
 
         cv.namedWindow("Image", cv.WINDOW_NORMAL)
         cv.setMouseCallback("Image", draw_circle)
         while True:
-            cv.imshow("Image", cv.fillPoly(img.copy(), [cv.convexHull(np.array(points), returnPoints=True).reshape((-1,2))], mask_color_) if len(points)>2 else img)
+            img_c = img.copy()
+            for point in points:
+                img_c = cv.fillPoly(img_c, [cv.convexHull(np.array(point), returnPoints=True).reshape((-1,2))], mask_color_) if len(point)>2 else img_c
+            
+            cv.imshow("Image", img_c)
             if cv.waitKey(1) & 0xFF == ord("q"):
-                break
+                if len(points[-1]) == 0:
+                    break
+                points.append([])
         cv.destroyAllWindows()
 
         # print(cv.convexHull(np.array(points), returnPoints=True).reshape((-1,2)))         
-        mask = cv.fillPoly(np.zeros_like(img), [cv.convexHull(np.array(points), returnPoints=True).reshape((-1,2))], [1,1,1]).astype(np.uint8)
+        mask = np.zeros_like(img)
+        for point in points:
+            if len(point)>2:
+                mask = cv.fillPoly(mask, [cv.convexHull(np.array(point), returnPoints=True).reshape((-1,2))], [1,1,1])
+
         try:
             if (os.path.exists(save_dir) and os.path.isdir(save_dir)):
                 save_path = os.path.join(save_dir, "mask.csv" if save_fname is None else save_fname)
