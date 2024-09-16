@@ -8,7 +8,7 @@ import os
 
 
 
-def create_labels(save_dir, save_fname, mask_color, img_dir, img_path=None):
+def create_labels(save_dir, save_fname, mask_color, img_dir, img_path=None, mask_flip=False):
     mask_color_ = [min([max([int(i), 0]), 255]) for i in mask_color.split(",")]
 
     if (img_path is not None):
@@ -48,6 +48,7 @@ def create_labels(save_dir, save_fname, mask_color, img_dir, img_path=None):
         for point in points:
             if len(point)>2:
                 mask = cv.fillPoly(mask, [cv.convexHull(np.array(point), returnPoints=True).reshape((-1,2))], [1,1,1])
+        mask = np.ones_like(mask)-mask if not mask_flip else mask
 
         try:
             if (os.path.exists(save_dir) and os.path.isdir(save_dir)):
@@ -75,7 +76,7 @@ def main():
     parser.add_argument('--save_dir', type=str, help='path to mask directory', default=None)
     parser.add_argument('--save_fname', type=str, help='path to mask directory', default=None)
     parser.add_argument('--mask_color', type=str, help='three digits delimited by comma \"255,255,255\"', default="120,120,120")
-
+    parser.add_argument('--mask_flip', type=bool, help='invert mask binary', action=argparse.BooleanOptionalAction, default=False)
     
     args = parser.parse_args()
 
@@ -83,9 +84,9 @@ def main():
         print("Path of Images and Masks must be given")
     else:
         if (args.img_name is None):
-            create_labels(args.save_dir, args.save_fname, args.mask_color, args.img_dir, None)
+            create_labels(args.save_dir, args.save_fname, args.mask_color, args.img_dir, None, args.mask_flip)
         else:
-            create_labels(args.save_dir, args.save_fname, args.mask_color, None, args.img_name)
+            create_labels(args.save_dir, args.save_fname, args.mask_color, None, args.img_name, args.mask_flip)
 
 
 
